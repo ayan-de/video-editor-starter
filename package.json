@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cpeak": "^1.4.0"
+    "cpeak": "^1.4.0",
+    "noheadachenode": "^1.0.1"
   }
 }

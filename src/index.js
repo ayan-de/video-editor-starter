@@ -1,4 +1,5 @@
-const cpeak = require("cpeak");
+// const cpeak = require("cpeak");
+const cpeak = require("noheadachenode");
 const { authenticate, serverIndex } = require("./middleware/index.js");
 const apiRouter = require("./router.js");
 
