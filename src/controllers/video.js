@@ -5,6 +5,9 @@ const { pipeline } = require("node:stream/promises");
 const util = require("../../lib/util");
 const DB = require("../DB");
 const FF = require("../../lib/FF");
+const JobQueue = require("../../lib/JobQueue");
+
+const job = new JobQueue();
 
 //returns the list of all the videos by the logged in user
 const getVideos = (req, res, handleErr) => {
@@ -193,23 +196,24 @@ const resizeVideo = async (req, res, handleErr) => {
   //refer image to understand the data pattern
   video.resizes[`${width}x${height}`] = { processing: true };
 
-  const originalVideopath = `./storage/${video.videoId}/original.${video.extension}`;
-  const tagetVideopath = `./storage/${video.videoId}/${width}x${height}.${video.extension}`;
+  // const originalVideopath = `./storage/${video.videoId}/original.${video.extension}`;
+  // const tagetVideopath = `./storage/${video.videoId}/${width}x${height}.${video.extension}`;
 
-  try {
-    await FF.resize(originalVideopath, tagetVideopath, width, height);
+  job.enqueue({
+    type: "resize",
+    videoId,
+    width,
+    height,
+  });
+  // await FF.resize(originalVideopath, tagetVideopath, width, height);
 
-    video.resizes[`${width}x${height}`].processing = false;
-    DB.save();
+  // video.resizes[`${width}x${height}`].processing = false;
+  // DB.save();
 
-    res.status(200).json({
-      status: "success",
-      message: "The video is now being processed!",
-    });
-  } catch (e) {
-    util.deleteFile(tagetVideopath);
-    return handleErr(e);
-  }
+  res.status(200).json({
+    status: "success",
+    message: "The video is now being processed!",
+  });
 };
 
 const controller = {
