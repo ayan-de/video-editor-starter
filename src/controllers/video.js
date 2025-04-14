@@ -5,9 +5,14 @@ const { pipeline } = require("node:stream/promises");
 const util = require("../../lib/util");
 const DB = require("../DB");
 const FF = require("../../lib/FF");
+const cluster = require("node:cluster");
 const JobQueue = require("../../lib/JobQueue");
 
-const job = new JobQueue();
+let job;
+//false for all children
+if (cluster.isPimary) {
+  const job = new JobQueue();
+}
 
 //returns the list of all the videos by the logged in user
 const getVideos = (req, res, handleErr) => {
@@ -199,12 +204,21 @@ const resizeVideo = async (req, res, handleErr) => {
   // const originalVideopath = `./storage/${video.videoId}/original.${video.extension}`;
   // const tagetVideopath = `./storage/${video.videoId}/${width}x${height}.${video.extension}`;
 
-  job.enqueue({
-    type: "resize",
-    videoId,
-    width,
-    height,
-  });
+  if (cluster.isPimary) {
+    job.enqueue({
+      type: "resize",
+      videoId,
+      width,
+      height,
+    });
+  } else {
+    //send a message to the parent only when it is not primary that is child process
+    process.send({
+      messageType: "new-resize",
+      data: { videoId, width, height },
+    });
+  }
+
   // await FF.resize(originalVideopath, tagetVideopath, width, height);
 
   // video.resizes[`${width}x${height}`].processing = false;
